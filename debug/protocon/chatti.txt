@@ -1,0 +1,90 @@
+# STEP 1
+
+	# native
+	# curl -v 'x/nativegit/repos/proty/info/refs?service=git-upload-pack'
+		> GET /nativegit/repos/proty/info/refs?service=git-upload-pack HTTP/1.1
+		> User-Agent: curl/7.28.0
+		> Host: x
+		> Accept: */*
+		>
+		< HTTP/1.1 200 OK
+		< Date: Sat, 10 Nov 2012 00:01:38 GMT
+		< Server: Apache/2.2.23 (Unix) mod_ssl/2.2.23 OpenSSL/1.0.1c DAV/2 PHP/5.4.8
+		< Expires: Fri, 01 Jan 1980 00:00:00 GMT
+		< Pragma: no-cache
+		< Cache-Control: no-cache, max-age=0, must-revalidate
+		< Transfer-Encoding: chunked
+		< Content-Type: application/x-git-upload-pack-advertisement
+		<
+		001e# service=git-upload-pack
+		000000b3e08fed95a0030541c8db12122a2f1573b2f51d25 HEADmulti_ack thin-pack side-band side-band-64k ofs-delta shallow no-progress include-tag multi_ack_detailed no-done agent=git/1.8.0
+		003fe08fed95a0030541c8db12122a2f1573b2f51d25 refs/heads/master
+
+	# php
+	# curl -v 'x/git/git.php/repos/proty/info/refs?service=git-upload-pack'
+		> GET /git/git.php/repos/proty/info/refs?service=git-upload-pack HTTP/1.1
+		> User-Agent: curl/7.28.0
+		> Host: x
+		> Accept: */*
+		>
+		< HTTP/1.1 200 OK
+		< Date: Sat, 10 Nov 2012 00:02:45 GMT
+		< Server: Apache/2.2.23 (Unix) mod_ssl/2.2.23 OpenSSL/1.0.1c DAV/2 PHP/5.4.8
+		< X-Powered-By: PHP/5.4.8
+		< Expires: Fri, 01 Jan 1980 00:00:00 GMT
+		< Pragma: no-cache
+		< Cache-Control: no-cache, max-age=0, must-revalidate
+		< Content-Length: 280
+		< Content-Type: application/x-git-upload-pack-advertisement
+		<
+		001e# service=git-upload-pack
+		000000b3e08fed95a0030541c8db12122a2f1573b2f51d25 HEADmulti_ack thin-pack side-band side-band-64k ofs-delta shallow no-progress include-tag multi_ack_detailed no-done agent=git/1.8.0
+		003fe08fed95a0030541c8db12122a2f1573b2f51d25 refs/heads/master
+
+# STEP 2
+
+	# cgi
+	# curl -v -H 'Content-Type: application/x-git-upload-pack-request' -H 'Accept: application/x-git-upload-pack-result' --data-binary '@/home/x/protocon/data' 'x/nativegit/repos/proty/git-upload-pack' &> /home/x/protocon/cgi.2
+	
+	> POST /nativegit/repos/proty/git-upload-pack HTTP/1.1
+	> User-Agent: curl/7.28.0
+	> Host: x
+	> Content-Type: application/x-git-upload-pack-request
+	> Accept: application/x-git-upload-pack-result
+	> Content-Length: 186
+	>
+	} [data not shown]
+	* upload completely sent off: 186 out of 186 bytes
+	< HTTP/1.1 200 OK
+	< Date: Sat, 10 Nov 2012 00:05:54 GMT
+	< Server: Apache/2.2.23 (Unix) mod_ssl/2.2.23 OpenSSL/1.0.1c DAV/2 PHP/5.4.8
+	< Expires: Fri, 01 Jan 1980 00:00:00 GMT
+	< Pragma: no-cache
+	< Cache-Control: no-cache, max-age=0, must-revalidate
+	< Transfer-Encoding: chunked
+	< Content-Type: application/x-git-upload-pack-result
+	<
+	{ [data not shown]
+
+	# php
+	
+	> POST /git/git.php/repos/proty/git-upload-pack HTTP/1.1
+	> User-Agent: curl/7.28.0
+	> Host: x
+	> Content-Type: application/x-git-upload-pack-request
+	> Accept: application/x-git-upload-pack-result
+	> Content-Length: 186
+	>
+	} [data not shown]
+	* upload completely sent off: 186 out of 186 bytes
+	< HTTP/1.1 200 OK
+	< Date: Sat, 10 Nov 2012 00:07:56 GMT
+	< Server: Apache/2.2.23 (Unix) mod_ssl/2.2.23 OpenSSL/1.0.1c DAV/2 PHP/5.4.8
+	< X-Powered-By: PHP/5.4.8
+	< Expires: Fri, 01 Jan 1980 00:00:00 GMT
+	< Pragma: no-cache
+	< Cache-Control: no-cache, max-age=0, must-revalidate
+	< Content-Length: 43
+	< Content-Type: application/x-git-upload-pack-result
+	<
+	{ [data not shown]
