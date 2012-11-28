@@ -4,7 +4,7 @@ error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors', 1);
 
 // settings
-define('REPODIR', getcwd(). '/.repos');
+define('REPODIR', getcwd(). '/repos');
 
 // access check
 //
@@ -27,52 +27,70 @@ define('REPODIR', getcwd(). '/.repos');
  */
 
 // set environment for the program
-$env = array(
+$pEnv = array(
 	'GIT_PROJECT_ROOT' => '.'
-//	'GIT_HTTP_EXPORT_ALL' => '',
 	);
-setIf($env, 'PATH_INFO', $_SERVER['PATH_INFO']);
-setIf($env, 'REMOTE_USER', $_SERVER['REMOTE_USER']);
-setIf($env, 'REMOTE_ADDR', $_SERVER['REMOTE_ADDR']);
-setIf($env, 'CONTENT_TYPE', $_SERVER['CONTENT_TYPE']);
-setIf($env, 'QUERY_STRING', $_SERVER['QUERY_STRING']);
-setIf($env, 'REQUEST_METHOD', $_SERVER['REQUEST_METHOD']);
+setIf($pEnv, 'PATH_INFO', $_SERVER['PATH_INFO']);
+setIf($pEnv, 'REMOTE_USER', $_SERVER['REMOTE_USER']);
+setIf($pEnv, 'REMOTE_ADDR', $_SERVER['REMOTE_ADDR']);
+setIf($pEnv, 'CONTENT_TYPE', $_SERVER['CONTENT_TYPE']);
+setIf($pEnv, 'QUERY_STRING', $_SERVER['QUERY_STRING']);
+setIf($pEnv, 'REQUEST_METHOD', $_SERVER['REQUEST_METHOD']);
 
-// in addition, Accept and Content-Type were observed being used by git (smart) http transfer
-setIf($env, 'HTTP_ACCEPT', $_SERVER['HTTP_ACCEPT']);
-setIf($env, 'CONTENT_LENGTH', $_SERVER['CONTENT_LENGTH']);
-
-// log
-//file_put_contents('pgkiss.log', "-- \$_SERVER @ ".date('d.m.y h:m:s').":\n". print_r($_SERVER, true), FILE_APPEND);
-//file_put_contents('pgkiss.log', "-- ENV @ ".date('d.m.y h:m:s').":\n". print_r($env, true), FILE_APPEND);
-//file_put_contents('pgkiss.log', "-- POST @ ".date('d.m.y h:m:s').":\n". print_r($_POST, true), FILE_APPEND);
+// in addition, Accept and Content-Type were observed being used by git http-backend
+setIf($pEnv, 'HTTP_ACCEPT', $_SERVER['HTTP_ACCEPT']);
+setIf($pEnv, 'CONTENT_LENGTH', $_SERVER['CONTENT_LENGTH']);
 
 // start program
-$p = proc_open(
+$pHandle = proc_open(
 //	'bash --norc --noprofile -c \'git http-backend 2>&1 | tee -a pgkiss.log\'',
 	'git http-backend',
 	array(
 		0 => array('pipe', 'r'),
-		1 => array('pipe', 'w',),
-		2 => array('pipe', 'w'),
+		1 => array('pipe', 'w'),
+		2 => array('file', 'err.log', 'a'),
 	),
-	$pipes,
+	$pPipes,
 	REPODIR,
-	$env,
+	$pEnv,
 	array('bypass_shell' => true)
 	);
-if ($p === false) err('Failed to execute process');
+if ($pHandle === false) err('Failed to execute process');
 
-// write post data from browser to program
-fwrite($pipes[0], file_get_contents('php://input'));
+// friendly names for handles to/from program
+$pReadHandle = $pPipes[1];
+$pWriteHandle = $pPipes[0];
 
-// parse headers from program output
+
+// open browser's input
+$cReadHandle = fopen('php://input', 'rb');
+if ($cReadHandle === false) {
+	err('Failed to open client\'s stream-to-read');
+}
+
+// ..and output streams
+$cWriteHandle = fopen('php://output', 'rb');
+if ($cWriteHandle === false) {
+	err('Failed to open client\'s stream-to-write');
+}
+
+// set streams to non-blocking mode
+$succ = true;
+$succ &= stream_set_blocking($pReadHandle, 0);
+$succ &= stream_set_blocking($pWriteHandle, 0);
+$succ &= stream_set_blocking($cReadHandle, 0);
+$succ &= stream_set_blocking($cWriteHandle, 0);
+if (!$succ) {
+	err('Failed to set streams to non-blocking mode');
+}
+
+/*// parse headers from program output
 $readRest = false;
 while (true) {
 	// read line from program output
-	$l = fgets($pipes[1]);
+	$l = fgets($pPipes[1]);
 	if ($l === false) {
-		if (@fpassthru($pipes[1]) === false) {
+		if (@fpassthru($pPipes[1]) === false) {
 			err('Failed to read from process output');
 		}
 	}
@@ -91,22 +109,115 @@ while (true) {
 }
 
 // pass program stderr output to browser
-fpassthru($pipes[2]);
+fpassthru($pPipes[2]);
 
 // pass rest of program stdout output to browser
-if ($readRest) fpassthru($pipes[1]);
+if ($readRest) fpassthru($pPipes[1]);*/
+
+try {
+
+	// keep track of client and program read- and write-readiness
+	$cRead = $cWrite = $pRead = $pWrite = false;
+	// buffer for client to program data
+	$bufC2P = '';
+	// buffer for program to client data
+	$bufP2C = '';
+	// flag for to know if headers (program -> client) must still be handled
+	$headersSent = false;
+
+	while (true) {
+		$rHandles = array();
+		$wHandles = array();
+		$eHandles = array();
+		
+		// if client is not readable, add it's read-iness to be checked
+		if (!$cRead) $rHandles[] = $cReadHandle;
+		// if program is not readable, add it's read-iness to be checked
+		if (!$pRead) $rHandles[] = $pReadHandle;
+		// if client is not writeable, add it's write-ness to be checked
+		if (!$cWrite) $wHandles[] = $cWriteHandle;
+		// if program is not writeable, add it's write-ness to be checked
+		if (!$pWrite) $wHandles[] = $pWriteHandle;
+		
+		// do the checking
+		if (count($rHandles) + count($wHandles) > 0) {
+			if (stream_select($rHandles, $wHandles, $eHandles, null) === false) {
+				throw new Exception('stream_select failed');
+			}
+		}
+		
+		// if client is readable
+		if ($cRead || array_search($cReadHandle, $rHandles, true)) {
+			$read = fread($cReadHandle, 1024);
+			$cRead = false;
+			if ($read != false) $bufC2P .= $read;
+		}
+		
+		// if program is readable
+		if ($pRead || array_search($pReadHandle, $rHandles, true)) {
+			$read = fread($pReadHandle, 1024);
+			$pRead = false;
+			if ($read != false) $bufP2C .= $read;
+		}
+		
+		// if client is writeable
+		if ($cWrite || array_search($cWriteHandle, $wHandles, true)) {
+			if (strlen($bufP2C) > 0) {
+				// buffer contains data to be sent
+				if (!$headersSent) {
+						// handle headers
+						$headersEndIdx = strpos($bufP2C, "\r\n\r\n");
+						if ($headersEndIdx !== false) {
+							// headers entirely in buffer
+							$headersStr = substr($bufP2C, 0, $headersEndIdx+2);
+							$headers = explode("\n", $headersStr);
+							foreach($headers as $h) {
+								echo 'header['.rtrim($h).']<br>\n';
+							}
+							$read = substr($read, $headersEndIdx+4);
+						}
+					} else {
+						// send data normally
+				}
+			}
+		}
+		
+		// if program is writeable
+		if ($pWrite || array_search($pWriteHandle, $wHandles, true)) {
+		}
+		
+	}
+	
+} catch (Exception $e) {
+	err($e->getMessage());
+}
+
+/*
+// select to check
+// - if browser has something to send
+// - if program has something to send
+// - if browser is ready to receive
+// - if program is ready to receive
+// if browser has something to send: save
+// if program has something to send: save
+// if browser is ready to receive: send saved * exceptional header handling
+// if program is ready to receive: send saved
+// loop until program has shut down it's end of the pipes 
+*/
 
 // close program
-@fclose($pipes[0]);
-@fclose($pipes[1]);
-@fclose($pipes[2]);
-@proc_terminate($p, 9/*SIGKILL*/);
-@proc_close($p);
+@fclose($pWriteHandle);
+@fclose($pReadHandle);
+@fclose($cReadHandle);
+@fclose($cWriteHandle);
+
+@proc_terminate($pHandle, 9/*SIGKILL*/);
+@proc_close($pHandle);
 
 // -- functions below
 
 function err($msg) {
-	header('dummy', true, 500);
+//	header('dummy', true, 500);
 	exit($msg);
 }
 
