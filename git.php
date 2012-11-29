@@ -23,8 +23,6 @@ setIf($pEnv, 'REQUEST_METHOD', $_SERVER['REQUEST_METHOD']);
 setIf($pEnv, 'HTTP_ACCEPT', $_SERVER['HTTP_ACCEPT']);
 setIf($pEnv, 'CONTENT_LENGTH', $_SERVER['CONTENT_LENGTH']);
 
-file_put_contents('err.log', print_r($_SERVER, true)."\n", FILE_APPEND);
-
 // start program
 $pHandle = proc_open(
 	GITPATH. ' http-backend',
