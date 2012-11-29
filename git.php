@@ -27,7 +27,7 @@ file_put_contents('err.log', print_r($_SERVER, true)."\n", FILE_APPEND);
 
 // start program
 $pHandle = proc_open(
-	GITEXE. ' http-backend',
+	GITPATH. ' http-backend',
 	array(
 		0 => array('pipe', 'r'),
 		1 => array('pipe', 'w'),

@@ -1,6 +1,8 @@
 ## PHP wrapper for "git http-backend"-CGI script.
 
-"Make git http-backend work when CGI execution is not available."
+"Make git http-backend work when CGI execution is not available."  
+or  
+"Host your own GIT repository on a web server with PHP and Git."
 
 ### Usage
 1. Drop git.php on a web server with PHP support.
