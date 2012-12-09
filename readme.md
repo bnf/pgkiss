@@ -1,6 +1,4 @@
-<!--
-pgkiss is a very simple PHP wrapper for "git http-backend"-CGI script. It enables hosting of Git repositories on a web server with just PHP and Git available. Currently relies on web-server provided authentication if (or when) such is needed.
--->
+[comment]: http:// "pgkiss is a very simple PHP wrapper for "git http-backend"-CGI script. It enables hosting of Git repositories on a web server with just PHP and Git available. Currently relies on web-server provided authentication if (or when) such is needed."
 
 ## PHP wrapper for "git-http-backend"-CGI script.
 
