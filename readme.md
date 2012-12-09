@@ -10,7 +10,7 @@ Host **Git repositories** on a **web server** with just **PHP** and **Git**.
 
 ### Usage
 1. Drop git.php on a web server with PHP support.
-2. Set *REPODIR* and *GITPATH* in git.php
+2. Set *REPODIR* (and *GITPATH*, if necessary) in git.php
 3. Create a Git repository under *REPODIR*:
 
         $ mkdir newrepo; cd newrepo

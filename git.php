@@ -33,7 +33,8 @@ $pHandle = proc_open(
 	),
 	$pPipes,
 	null,
-	$pEnv
+	$pEnv,
+	array('bypass_shell' => true)
 	);
 if ($pHandle === false) err('Failed to execute process');
 
