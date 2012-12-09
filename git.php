@@ -63,8 +63,6 @@ file_put_contents('err.log', "\n", FILE_APPEND);
 // close pipes
 @fclose($pWriteHandle);
 @fclose($pReadHandle);
-@fclose($cReadHandle);
-@fclose($cWriteHandle);
 
 // ensure program is closed
 @proc_terminate($pHandle, 9/*SIGKILL*/);
@@ -76,7 +74,7 @@ function err($msg) {
 	exit($msg);
 }
 
+// $arr[$key] = $value IF isset($value)
 function setIf(&$arr, $key, &$value) {
-	if (!isset($value)) return;
-	$arr[$key] = $value;
+	if (isset($value)) $arr[$key] = $value;
 }
