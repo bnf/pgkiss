@@ -1,0 +1,10 @@
+* force identity (probably easiest with hooks)
+* access checks?
+   * "/git-upload-pack$", "/git-receive-pack$" // "/info/refs$" & "/objects/info/http-alternates$"
+     (https://github.com/git/git/blob/e32a4581bcbf1cf43cd5069a0d19df07542d612a/http-backend.c#L532,
+      http://www.kernel.org/pub/software/scm/git/docs/git-http-backend.html)
+* repository manager
+	* format repository +=
+		* http.getanyfile false // force access through upload- and receivepack to enable access checking
+		* git config http.receivepack true
+		* (maybe) git config core.logallrefupdates true // ip logged by default (git http-backend doc)

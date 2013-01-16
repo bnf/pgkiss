@@ -4,8 +4,12 @@ error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors', 1);
 
 // <settings>
+// REPODIR = directory under which git repositories reside,
+// GITPATH = path to git executable (use 'git' if git is reachable via PATH)
+
 define('REPODIR', getcwd(). '/repos');
 define('GITPATH', 'git');
+
 // </settings>
 
 // set environment for the program
@@ -34,7 +38,7 @@ $pHandle = proc_open(
 	$pPipes,
 	null,
 	$pEnv,
-	array('bypass_shell' => true)
+	array('bypass_shell' => true) // bypass_shell = windows-only flag
 	);
 if ($pHandle === false) err('Failed to execute process');
 
