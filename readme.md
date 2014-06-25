@@ -30,8 +30,8 @@ URL will be something like `http(s)://domain.tld/something/git.php/<repository>`
 * You can configure web server to [require a password][greqpass] when accessing the repositories.
 * Error output from `git-http-backend` will be written to `err.log` (permissions..)
 
-[gurlrewrite]:	https://www.google.fi/search?q=url+rewriting
-[greqpass]:		https://www.google.fi/search?q=web+server+password+protect
+[gurlrewrite]: https://www.google.fi/search?q=url+rewriting
+[greqpass]: https://www.google.fi/search?q=web+server+password+protect
 
 Thanks to people for [sharing][tnx1] [information][tnx2].
 
